@@ -4,7 +4,7 @@ import Data.List (List(..), (:))
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.Console (log)
-import Prelude (Unit, discard, show, (+))
+import Prelude (Unit, discard, show, (+), (-), (>=), (/=), (==), negate, type (~>))
 
 
 appendA :: Boolean -> Int -> String
@@ -103,6 +103,43 @@ uncons :: ∀ a. List a -> Maybe { head :: a, tail :: List a }
 uncons Nil = Nothing
 uncons (x : xs) = Just { head: x, tail: xs }
 
+-- index :: ∀ a. List a -> Int -> Maybe a
+-- index l idx = if idx >= length l Nothing else 
+index :: ∀ a. List a -> Int -> Maybe a
+-- index Nil _ = Nothing
+index Nil _ = Nothing
+index (x : _) 0 = Just x
+index (_ : xs) i = index xs (i - 1) 
+
+infixl 8 index as !!
+
+findIndex :: ∀ a. (a -> Boolean) -> List a -> Maybe Int
+findIndex pred l = go 0 l where
+  go _ Nil = Nothing
+  go i (x : xs) = if pred x then Just i else go (i + 1) xs  
+
+
+findLastIndex :: ∀ a. (a -> Boolean) -> List a -> Maybe Int
+-- findLastIndex pred l = head (goodl 0 Nil l) where
+--   goodl :: Int -> List Int -> List a -> List Int
+--   goodl _ cur Nil = cur
+--   goodl idx cur (x : xs) = if pred x then goodl (idx + 1) (idx : cur) xs else goodl (idx + 1) cur xs  
+findLastIndex pred l = go Nothing 0 l where
+  go fi _ Nil = fi
+  go fi i (x : xs) = go (if pred x then Just i else fi) (i + 1) xs
+
+-- reverse :: ∀ a. List a -> List a
+reverse :: List ~> List 
+-- reverse Nil = Nil
+-- reverse (x : xs) = add x (reverse xs) where
+--   add :: ∀ a. a -> List a -> List a
+--   add t Nil = t : Nil
+--   add t (y : ys) = y : (add t ys) 
+reverse l = go Nil l where
+  go rl Nil = rl
+  go rl (x : xs) = go (x : rl) xs
+
+
 test :: Effect Unit
 test = do
   log $ show $ flip const 1 2
@@ -130,4 +167,20 @@ test = do
   log $ show $ init (1 : 2 : Nil)
   log $ show $ init (1 : 2 : 3 : Nil)
   log $ show $ uncons (1 : 2 : 3 : 4 : Nil)
-  
+  log $ show "## index ##"
+  log $ show $ index (1 : Nil) 4
+  log $ show $ index (1 : 2 : 3 : Nil) 1
+  log $ show $ index (Nil :: List Unit) 0
+  log $ show "## !! ##"
+  log $ show $ (1 : 2 : 3 : Nil) !! 1
+  log $ show "## findIndex ##"
+  log $ show $ findIndex (_ >= 2) (1 : 2 : 3 : Nil)
+  log $ show $ findIndex (_ >= 99) (1 : 2 : 3 : Nil)
+  log $ show $ findIndex (_ == 3123) Nil
+  log $ show "## findLastIndex ##"
+  log $ show $ findLastIndex (_ == 10) Nil
+  log $ show $ findLastIndex (_ == 10) (20 : 5 : 10 : -1 : 2 : 10 : -1 : Nil)
+  log $ show $ findLastIndex (_ == 3123) (11 : 12 : Nil)
+  log $ show "## reverse ##"
+  log $ show $ reverse (10 : 20 : 30 : 40 : 50 : -1 : Nil)
+  log $ show $ reverse (Nil :: List Unit)
