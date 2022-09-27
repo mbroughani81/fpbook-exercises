@@ -74,5 +74,5 @@ test = do
       name: "a"
       , age: 10
       , address: Address {street1: "s1", street2: "s2", city: "c", state: "s", zip: "z"}}
-  log $ show $
-    (genericTail :: _ -> Maybe {head :: CodePoint, tail :: _})  "abc"
+  -- log $ show $
+  --   (genericTail :: _ -> Maybe {head :: CodePoint, tail :: _})  "abc"
