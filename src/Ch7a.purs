@@ -2,12 +2,12 @@ module Ch7a where
 
 import Data.Eq (class Eq)
 import Data.Generic.Rep (class Generic)
-import Data.Ord (class Ord, Ordering(..), compare)
+import Data.Ord (class Ord)
 import Data.Show (class Show, show)
 import Data.Show.Generic (genericShow)
 import Effect (Effect)
 import Effect.Console (log)
-import Prelude (Unit, discard, (==), ($), (<), (>), (<=), (||))
+import Prelude (Unit, discard, (==), ($), (<), (>), (<=), (>=))
 
 
 data Maybe a = Nothing | Just a
@@ -40,9 +40,20 @@ instance showMaybe :: Show a => Show (Maybe a) where
   show = genericShow
 
 
-greaterThanOrEq :: ∀ a. Ord a => a -> a -> Boolean
-greaterThanOrEq x y = cmp == EQ || cmp == GT where cmp = compare x y
-infixl 4 greaterThanOrEq as >= 
+
+data Either a b = Left a | Right b
+derive instance eqEither :: (Eq a, Eq b) => Eq (Either a b)
+derive instance ordEither :: (Ord a, Ord b) => Ord(Either a b)
+derive instance genericEither :: Generic (Either a b) _
+instance showEither :: (Show a, Show b) => Show (Either a b) where
+  show = genericShow
+
+
+-- greaterThanOrEq :: ∀ a. Ord a => a -> a -> Boolean
+-- greaterThanOrEq x y = cmp == EQ || cmp == GT where cmp = compare x y
+-- infixl 4 greaterThanOrEq as >= 
+
+type MyEitherVar = Either String (Maybe Int)
 
 test :: Effect Unit
 test = do
@@ -61,3 +72,11 @@ test = do
   log "------------------"
   log $ show $ Just "abc"
   log $ show $ (Nothing :: Maybe Unit)
+  log "------------------"
+  log $ show $ (Left "left" :: Either _ Unit)
+  log $ show $ (Right (Just 42) :: Either Unit _)
+  let x = Left "left" :: MyEitherVar
+      y :: MyEitherVar
+      y = Right (Just 42)
+  log $ show x
+  log $ show y
