@@ -17,7 +17,6 @@ class Semigroup a <= Monoid a where
 data AndBool = AFalse | ATrue
 derive instance eqAndBool :: Eq AndBool
 derive instance genericAndBool :: Generic AndBool _
-
 instance showAndBool :: Show AndBool where
   show = genericShow
 
@@ -40,6 +39,29 @@ verifyAndBoolMonoid = do
   log $ show $ (ATrue <> mempty) == ATrue && ATrue == (ATrue <> mempty)
   log $ show $ (AFalse <> mempty) == AFalse && AFalse == (AFalse <> mempty)
 
+data OrBool = OTrue | OFalse
+derive instance eqOrBool :: Eq OrBool
+derive instance genericOrBool :: Generic OrBool _
+instance showOrBool :: Show OrBool where
+  show = genericShow
+
+instance semigroupOrBool :: Semigroup OrBool where
+  append OFalse OFalse = OFalse
+  append _ _ = OTrue
+
+instance monoidOrBool :: Monoid OrBool where
+  mempty = OFalse
+
+verifyOrBoolSemigroup :: Effect Unit
+verifyOrBoolSemigroup = do
+  log $ show $ (OTrue <> OFalse) <> OFalse == OTrue <> (OFalse <> OFalse) 
+
+verifyOrBoolMonoid :: Effect Unit
+verifyOrBoolMonoid = do
+  log $ show $ OFalse <> mempty == OFalse && mempty <> OFalse == OFalse
+  log $ show $ OTrue <> mempty == OTrue && mempty <> OTrue == OTrue 
+
+
 test :: Effect Unit
 test = do
   log $ show $ ATrue <> ATrue
@@ -52,4 +74,7 @@ test = do
   verifyAndBoolSemigroup
   log $ show $ "----------------------"
   verifyAndBoolMonoid
-
+  log $ show $ "----------------------"
+  verifyOrBoolSemigroup
+  log $ show $ "----------------------"
+  verifyOrBoolMonoid
