@@ -1,14 +1,15 @@
 module Ch11 where
 
-import Data.List (List(..), (:), foldl)
-import Data.Ord (class Ord)
+import Data.Foldable (class Foldable, foldl, foldr, foldMap)
+import Data.List (List(..), (:))
+import Data.List.Types (NonEmptyList(..))
 import Data.Maybe (Maybe(..))
 import Data.NonEmpty (NonEmpty, (:|))
-import Data.Foldable (class Foldable)
-import Data.List.Types (NonEmptyList(..))
+import Data.Ord (class Ord)
+import Data.Semiring (class Semiring)
 import Effect (Effect)
 import Effect.Console (log)
-import Prelude (type (~>), Unit, discard, negate, otherwise, show, ($), (<))
+import Prelude (type (~>), Unit, discard, negate, otherwise, show, zero, ($), (+), (<), (<>), (<<<))
 
 reverse :: List ~> List
 -- reverse Nil = Nil
@@ -46,6 +47,26 @@ findMaxNE :: ∀ a. Ord a => NonEmptyList a -> a
 -- findMaxNE (NonEmptyList (x :| xs)) = foldl (\mx e -> max mx e) x xs 
 findMaxNE (NonEmptyList xs) = foldl1 (\mx e -> max mx e) xs
 
+sum :: ∀ f a. Foldable f => Semiring a => f a -> a
+-- sum Nil = 0
+-- sum (x : xs) = x + sum xs 
+
+-- sum l = go 0 l where 
+--   go curSum Nil = curSum
+--   go curSum (y : ys) = go (curSum + y) ys
+sum l = foldl (+) zero l
+
+data Tree a = Leaf a | Node (Tree a) (Tree a)
+
+toList :: ∀ a. Tree a -> List a
+toList (Leaf a) = a : Nil
+toList (Node x y) = toList x <> toList y
+
+instance foldableTree :: Foldable Tree where
+  foldr f acc = foldr f acc <<< toList
+  foldl f acc = foldl f acc <<< toList
+  foldMap f = foldMap f <<< toList 
+
 test :: Effect Unit
 test = do
   log $ show $ reverse (10 : 20 : 30 : Nil)
@@ -55,3 +76,12 @@ test = do
   log $ show $ findMax ("a" : "bbb" : "c" : Nil)
   log $ show $ findMaxNE (NonEmptyList $ 37 :| (311 : -1 : 2 : 84 : Nil))
   log $ show $ findMaxNE (NonEmptyList $ "a" :| ("bbb" : "c" : Nil)) 
+  log $ show $ sum (1 : 2 : 3 : Nil)
+  log $ show $ sum (1.0 : 2.0 : 3.0 : Nil)
+  log $ show $ sum [1, 2, 3]
+  log $ show $ sum [1.0, 2.0, 3.0] 
+  log $ show $ sum
+    (Node (Node (Leaf 5) (Node (Leaf (-1)) (Leaf 14))) (Leaf 99))
+  log $ show $ toList 
+    (Node (Node (Leaf 5) (Node (Leaf (-1)) (Leaf 14))) (Leaf 99))
+  
