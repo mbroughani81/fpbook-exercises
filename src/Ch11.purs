@@ -79,22 +79,14 @@ instance toListLeftFirstTree :: ToList LeftFirstTree where
 --   foldr f acc = foldr f acc <<< toList
 --   foldl f acc = foldl f acc <<< toList
 --   foldMap f = foldMap f <<< toList 
--- instance foldableRightFirstTree :: Foldable RightFirstTree where
---   foldr f acc = foldr f acc <<< toList
---   foldl f acc = foldl f acc <<< toList
---   foldMap f = foldMap f <<< toList
--- instance foldableLeftFirstTree :: Foldable LeftFirstTree where
---   foldr f acc = foldr f acc <<< toList
---   foldl f acc = foldl f acc <<< toList
---   foldMap f = foldMap f <<< toList
-data MaType a = R (RightFirstTree a) | L (LeftFirstTree a)
-instance toListMaType :: ToList MaType where
-  toList (R x) = toList x
-  toList (L x) = toList x
-instance foldableHasToList :: Foldable MaType where
-  foldr f acc l = foldr f acc $ toList l
-  foldl f acc l = foldl f acc $ toList l
-  foldMap f l = foldMap f $ toList l
+instance foldableRightFirstTree :: Foldable RightFirstTree where
+  foldr f acc = foldr f acc <<< toList
+  foldl f acc = foldl f acc <<< toList
+  foldMap f = foldMap f <<< toList
+instance foldableLeftFirstTree :: Foldable LeftFirstTree where
+  foldr f acc = foldr f acc <<< toList
+  foldl f acc = foldl f acc <<< toList
+  foldMap f = foldMap f <<< toList
 test :: Effect Unit
 test = do
   log $ show $ reverse (10 : 20 : 30 : Nil)
@@ -112,9 +104,9 @@ test = do
   --   (Node (Node (Leaf 5) (Node (Leaf (-1)) (Leaf 14))) (Leaf 99))
   log $ show $ toList $ LeftFirstTree
     (Node (Node (Leaf 5) (Node (Leaf (-1)) (Leaf 14))) (Leaf 99))
-  log $ show $ sum $ L $ LeftFirstTree
+  log $ show $ sum $ LeftFirstTree
     (Node (Node (Leaf 5) (Node (Leaf (-1)) (Leaf 14))) (Leaf 99))
   log $ show $ toList $ RightFirstTree
     (Node (Node (Leaf 5) (Node (Leaf (-1)) (Leaf 14))) (Leaf 99))
-  log $ show $ sum $ R $ RightFirstTree
+  log $ show $ sum $ RightFirstTree
     (Node (Node (Leaf 5) (Node (Leaf (-1)) (Leaf 14))) (Leaf 99))
