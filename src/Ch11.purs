@@ -1,6 +1,6 @@
 module Ch11 where
 
-import Data.Foldable (class Foldable, foldl, foldr, foldMap)
+import Data.Foldable (class Foldable, foldMap, foldl, foldr)
 import Data.List (List(..), (:))
 import Data.List.Types (NonEmptyList(..))
 import Data.Maybe (Maybe(..))
@@ -58,15 +58,43 @@ sum l = foldl (+) zero l
 
 data Tree a = Leaf a | Node (Tree a) (Tree a)
 
-toList :: ∀ a. Tree a -> List a
-toList (Leaf a) = a : Nil
-toList (Node x y) = toList x <> toList y
+-- toList :: ∀ a. Tree a -> List a
+-- toList (Leaf a) = a : Nil
+-- toList (Node x y) = toList x <> toList y
 
-instance foldableTree :: Foldable Tree where
-  foldr f acc = foldr f acc <<< toList
-  foldl f acc = foldl f acc <<< toList
-  foldMap f = foldMap f <<< toList 
+class ToList f where
+  toList :: ∀ a. f a -> List a
 
+newtype RightFirstTree a = RightFirstTree (Tree a)
+newtype LeftFirstTree a = LeftFirstTree (Tree a)
+instance toListRightFirstTree :: ToList RightFirstTree where
+  toList (RightFirstTree (Leaf x)) = x : Nil
+  toList (RightFirstTree (Node lt rt)) =
+   toList (RightFirstTree rt) <> toList (RightFirstTree lt)
+instance toListLeftFirstTree :: ToList LeftFirstTree where
+  toList (LeftFirstTree (Leaf x)) = x : Nil
+  toList (LeftFirstTree (Node lt rt)) =
+    toList (LeftFirstTree lt) <> toList (LeftFirstTree rt)
+-- instance foldableTree :: Foldable Tree where
+--   foldr f acc = foldr f acc <<< toList
+--   foldl f acc = foldl f acc <<< toList
+--   foldMap f = foldMap f <<< toList 
+-- instance foldableRightFirstTree :: Foldable RightFirstTree where
+--   foldr f acc = foldr f acc <<< toList
+--   foldl f acc = foldl f acc <<< toList
+--   foldMap f = foldMap f <<< toList
+-- instance foldableLeftFirstTree :: Foldable LeftFirstTree where
+--   foldr f acc = foldr f acc <<< toList
+--   foldl f acc = foldl f acc <<< toList
+--   foldMap f = foldMap f <<< toList
+data MaType a = R (RightFirstTree a) | L (LeftFirstTree a)
+instance toListMaType :: ToList MaType where
+  toList (R x) = toList x
+  toList (L x) = toList x
+instance foldableHasToList :: Foldable MaType where
+  foldr f acc l = foldr f acc $ toList l
+  foldl f acc l = foldl f acc $ toList l
+  foldMap f l = foldMap f $ toList l
 test :: Effect Unit
 test = do
   log $ show $ reverse (10 : 20 : 30 : Nil)
@@ -80,8 +108,13 @@ test = do
   log $ show $ sum (1.0 : 2.0 : 3.0 : Nil)
   log $ show $ sum [1, 2, 3]
   log $ show $ sum [1.0, 2.0, 3.0] 
-  log $ show $ sum
+  -- log $ show $ sum
+  --   (Node (Node (Leaf 5) (Node (Leaf (-1)) (Leaf 14))) (Leaf 99))
+  log $ show $ toList $ LeftFirstTree
     (Node (Node (Leaf 5) (Node (Leaf (-1)) (Leaf 14))) (Leaf 99))
-  log $ show $ toList 
+  log $ show $ sum $ L $ LeftFirstTree
     (Node (Node (Leaf 5) (Node (Leaf (-1)) (Leaf 14))) (Leaf 99))
-  
+  log $ show $ toList $ RightFirstTree
+    (Node (Node (Leaf 5) (Node (Leaf (-1)) (Leaf 14))) (Leaf 99))
+  log $ show $ sum $ R $ RightFirstTree
+    (Node (Node (Leaf 5) (Node (Leaf (-1)) (Leaf 14))) (Leaf 99))
