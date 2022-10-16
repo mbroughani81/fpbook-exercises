@@ -4,7 +4,7 @@ import Data.Generic.Rep (class Generic)
 import Data.Show.Generic (genericShow)
 import Effect (Effect)
 import Effect.Console (log)
-import Prelude (class Show, Unit, discard, show, ($), (/))
+import Prelude (class Eq, class Show, Unit, discard, identity, show, ($), (/), (<>), (==),(<<<), (*))
 
 class Functor f where
   map :: ∀ a b. (a -> b) -> f a -> f b
@@ -53,6 +53,8 @@ instance showThreeple :: (Show a, Show b, Show c) => Show (Threeple a b c) where
 instance functorThreeple :: Functor (Threeple a b) where
   map f (Threeple x y z) = Threeple x y (f z)
 
+derive instance eqMaybe :: Eq a => Eq (Maybe a)
+
 test :: Effect Unit
 test = do
   log $ show $ (_ / 2) <$> Just 10
@@ -64,3 +66,15 @@ test = do
 
   log $ show $ (_ / 2) <$> Tuple 10 20 
   log $ show $ (_ / 2) <$> Threeple 10 20 40 
+  log $ show $ "Maybe Identity for Nothing: "
+    <> show ((identity <$> Nothing) == (Nothing :: Maybe Unit))
+  log $ show $ "Maybe Identity for Just: "
+    <> show ((identity <$> Just [1, 2]) == Just [1, 2]) 
+  let g x = x * 2
+      f x = x * 3
+  log $ show $ "Maybe Composition for Nothing: "
+    <> show (map (g <<< f) Nothing == (map g <<< map f) Nothing)
+  log $ show $ "Maybe Composition for Nothing: "
+    <> show (map (g <<< f) (Just 10) == (map g <<< map f) (Just 10))
+  -- log $ show $ "Maybe Composition for Just: "
+  --   <> show 
