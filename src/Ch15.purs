@@ -2,9 +2,12 @@ module Ch15 where
 
 import Prelude
 
+import Data.Foldable (class Foldable, foldl)
 import Data.Functor.Contravariant (class Contravariant, cmap, (>$<))
 import Data.Int.Bits ((.&.))
-import Data.Profunctor (class Profunctor)
+import Data.List (List(..), (:))
+import Data.Profunctor (class Profunctor, dimap, lcmap)
+import Data.String (length)
 import Effect (Effect)
 import Effect.Console (log)
 
@@ -25,7 +28,18 @@ instance profunctorMoore :: Profunctor (Moore s) where
   -- dimap ca bd (Moore t output transition)  = Moore t (bd <<< output) (\s -> (transition s) <<< ca)
   dimap ca bd (Moore t output transition)  = Moore t (bd <<< output) (\s c -> transition s (ca c))
 
-  
+-- addr :: Moore Int Int Int
+-- -- addr = Moore 0 (\s -> s) (\s a -> s + a)
+-- addr = Moore 0 identity (+)
+addr :: ∀ a. Semiring a => Moore a a a
+addr = Moore zero identity (+)
+
+runFoldL :: ∀ f s a b. Foldable f => Moore s a b -> f a -> b
+runFoldL (Moore s0 extract transform) = extract <<< foldl transform s0
+
+sizer :: Moore Int String String
+-- sizer = Moore 0 (\sum -> sum) (\sum s -> sum + length s)
+sizer = dimap (\s -> length s) (\x -> "Size is " <> show x) addr 
 
 test :: Effect Unit
 test = do
@@ -39,3 +53,8 @@ test = do
   log $ show $ runPredicate (cmap (_ + 2) (Predicate odd)) 10
   log $ show $ runPredicate ((_ + 1) >$< (Predicate odd)) 10
   log $ show $ runPredicate ((_ + 2) >$< (Predicate odd)) 10
+  log "------------------------------------"
+  log $ show $ runFoldL addr [1, 2, 3]
+  log $ show $ runFoldL addr (1.0 : 2.0 : 3.0 : Nil)
+  log $ show $ runFoldL sizer [ "This", "is", "the", "test" ] 
+  log $ show $ length <$> [ "This", "is", "the", "test" ] 
