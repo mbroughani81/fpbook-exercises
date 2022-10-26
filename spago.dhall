@@ -13,6 +13,7 @@ to generate this file without the comments in this block.
 { name = "my-project"
 , dependencies =
   [ "console"
+  , "contravariant"
   , "effect"
   , "foldable-traversable"
   , "integers"
@@ -21,6 +22,7 @@ to generate this file without the comments in this block.
   , "newtype"
   , "nonempty"
   , "prelude"
+  , "profunctor"
   , "strings"
   , "tuples"
   ]
