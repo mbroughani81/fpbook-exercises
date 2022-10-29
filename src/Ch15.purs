@@ -6,6 +6,7 @@ import Data.Foldable (class Foldable, foldl)
 import Data.Functor.Contravariant (class Contravariant, cmap, (>$<))
 import Data.Int.Bits ((.&.))
 import Data.List (List(..), (:))
+import Data.Maybe (Maybe(..))
 import Data.Profunctor (class Profunctor, dimap)
 import Data.String (length)
 import Effect (Effect)
@@ -56,5 +57,12 @@ test = do
   log "------------------------------------"
   log $ show $ runFoldL addr [1, 2, 3]
   log $ show $ runFoldL addr (1.0 : 2.0 : 3.0 : Nil)
-  log $ show $ runFoldL sizer [ "This", "is", "the", "test" ] 
-  log $ show $ length <$> [ "This", "is", "the", "test" ] 
+  log $ show $ runFoldL sizer [ "This", "is", "the", "test" ]
+  log $ show $ length <$> [ "This", "is", "the", "test" ]
+  log $ show $ (\f -> f 20) <$> Just (_ * 10)
+  log $ show $ (\f -> f <$> Just 20) <$> Just (_ * 10)
+  log "------------------------------------"
+  log $ show $ Just (_ * 10) <*> Just 20 
+  log $ show $ Just (_ * 10) <*> Nothing
+  log $ show $ (Nothing :: Maybe (Int -> Int)) <*> Just 20
+  
