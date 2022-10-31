@@ -4,6 +4,7 @@ import Prelude
 
 import Data.Bifunctor (class Bifunctor, bimap)
 import Data.Generic.Rep (class Generic)
+import Data.Newtype (class Newtype)
 import Data.Show.Generic (genericShow)
 import Effect (Effect)
 import Effect.Console (log)
@@ -59,6 +60,70 @@ instance applyEither :: Apply (Either a) where
 instance applicativeEither :: Applicative (Either a) where
   pure :: ∀ b. b -> Either a b
   pure = Right 
+
+newtype Validation err result = Validation (Either err result)
+
+derive instance newtypeValidation :: Newtype (Validation err result) _
+
+derive instance functorValidation  :: Functor (Validation err)
+
+derive newtype instance bifunctorValidation  :: Bifunctor Validation
+-- instance bifunctorValidation :: Bifunctor Validation where
+--   bimap f _ (Validation (Left x)) = Validation $ Left $ f x
+--   bimap _ g (Validation (Right y)) = Validation $ Right $ g y
+
+derive instance eqValidation :: (Eq err, Eq result) => Eq (Validation err result)
+
+derive instance ordValidation :: (Ord err, Ord result) => Ord (Validation err result)
+
+instance applyValidation :: Semigroup err => Apply (Validation err) where
+  apply :: ∀ a b. Validation err (a -> b) -> Validation err a -> Validation err b
+  -- apply ff v = case ff of
+  --   Validation (Left es) -> case v of
+  --     Validation (Left e) -> Validation $ Left $ e <> es
+  --     Validation (Right _) -> Validation $ Left es    
+  --   Validation (Right f) -> f <$> v
+      -- Validation (Left e) -> Validation $ Left e
+      -- Validation (Right r) -> Validation $ Right $ f r   
+  apply (Validation (Left es)) (Validation (Left e)) = Validation (Left (es <> e))
+  apply (Validation (Left es)) _ = Validation (Left es)
+  apply (Validation (Right f)) x = f <$>x
+
+derive instance genericValidation :: Generic (Validation err result) _
+
+instance showValidation :: (Show err, Show result) => Show (Validation err result) where
+  show = genericShow
+
+newtype Age = Age Int
+
+derive instance genericAge :: Generic Age _
+
+instance showAge :: Show Age where
+  show = genericShow
+
+newtype FullName = FullName String
+
+derive instance genericFullName :: Generic FullName _
+
+instance showFullName :: Show FullName where
+  show = genericShow
+
+type FamilyAgesRow r = ( fatherAge :: Age, motherAge :: Age, childAge :: Age | r )
+type FamilyNamesRow r = ( fatherName :: FullName, motherName :: FullName, childName :: FullName | r )
+
+newtype FamilyAges = FamilyAges { | FamilyAgesRow () }
+
+derive instance genericFamilyAges :: Generic FamilyAges _
+
+instance showFamilyAges :: Show FamilyAges where
+  show = genericShow
+
+newtype Family = Family { | FamilyNamesRow(FamilyAgesRow ()) }
+
+derive instance genericFamily :: Generic Family _
+
+instance showFamily :: Show Family where
+  show = genericShow
 
 test :: Effect Unit
 test = do
