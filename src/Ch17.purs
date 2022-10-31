@@ -1,6 +1,15 @@
-module Ch17 where
+module Ch17 
 
-import Prelude
+( Age(..)
+, FamilyAges(..)
+, FamilyAgesRow
+, Validation(..)
+, Either(..)
+, createFamilyAges
+, test
+) where
+
+import Prelude hiding((<*>), (<$>))
 
 import Data.Bifunctor (class Bifunctor, bimap)
 import Data.Generic.Rep (class Generic)
@@ -125,6 +134,27 @@ derive instance genericFamily :: Generic Family _
 instance showFamily :: Show Family where
   show = genericShow
 
+newtype UpperAge = UpperAge Int
+newtype LowerAge = LowerAge Int
+
+validateAge :: LowerAge -> UpperAge -> Age -> String -> Validation (Array String) Age
+validateAge (LowerAge x1) (UpperAge x2) (Age x3) field
+  | x3 > x2 = Validation $ Left [field <> " is too old"]
+  | x3 < x1 = Validation $ Left [field <> " is too young"]
+  | otherwise = Validation $ Right $ Age x3
+
+createFamilyAges :: { | FamilyAgesRow() } -> Validation (Array String) FamilyAges
+createFamilyAges { fatherAge, motherAge, childAge } = 
+  -- (\fAge mAge cAge -> FamilyAges { fatherAge: fAge, motherAge: mAge, childAge: cAge }) 
+  --   <$> validateAge (LowerAge 18) (UpperAge 100) fatherAge "father"
+  --   <*> validateAge (LowerAge 18) (UpperAge 100) motherAge "mother"
+  --   <*> validateAge (LowerAge 1) (UpperAge 18) childAge "child"
+  FamilyAges <$> ( { fatherAge: _, motherAge: _, childAge: _ } 
+    <$> validateAge (LowerAge 18) (UpperAge 100) fatherAge "father"
+    <*> validateAge (LowerAge 18) (UpperAge 100) motherAge "mother"
+    <*> validateAge (LowerAge 1) (UpperAge 18) childAge "child"
+  )
+
 test :: Effect Unit
 test = do
   log "placeholder"
@@ -160,3 +190,15 @@ test = do
   -- LAW: Interchange
   -- u <*> pure x = pure (_ $ x) <*> u
   log $ show $ (pure negate <*> pure 1) == (pure (_ $ 1) <*> pure negate :: Either Unit Int)
+
+  log $ show $ createFamilyAges
+    { fatherAge: Age 40, motherAge: Age 30, childAge: Age 10 }
+  log $ show $ createFamilyAges
+    { fatherAge: Age 400, motherAge: Age 300, childAge: Age 0 }
+  log $ show $ createFamilyAges
+    { fatherAge: Age 4, motherAge: Age 3, childAge: Age 10 }
+  log $ show $ createFamilyAges
+    { fatherAge: Age 40, motherAge: Age 30, childAge: Age 100 }
+  log $ show $ createFamilyAges
+    { fatherAge: Age 40, motherAge: Age 3, childAge: Age 0 }
+  
