@@ -27,6 +27,7 @@ to generate this file without the comments in this block.
   , "profunctor"
   , "strings"
   , "tuples"
+  , "unfoldable"
   ]
 , packages = ./packages.dhall
 , sources = [ "src/**/*.purs", "test/**/*.purs" ]
